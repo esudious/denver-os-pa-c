@@ -87,7 +87,15 @@ static alloc_status
                                 node_pt node);
 static alloc_status _mem_sort_gap_ix(pool_mgr_pt pool_mgr);
 
+/***************************************
+ *
+ * My Variables
+ *
+ ***************************************/
 
+int mem_init_called = 0;  /* booleans 0 = false */
+int mem_free_called = 0;
+pool_t my_pool;
 
 /****************************************/
 /*                                      */
@@ -99,20 +107,48 @@ alloc_status mem_init() {
     // allocate the pool store with initial capacity
     // note: holds pointers only, other functions to allocate/deallocate
 
-    return ALLOC_FAIL;
+    /*printf("mem_init = %d\n", mem_init_called); ghetto debug print */
+    if (mem_init_called == 0 ) {
+        mem_init_called = 1;
+        mem_free_called = 0;
+        return ALLOC_OK;
+    } else {
+        return ALLOC_CALLED_AGAIN;
+    }
+
+
 }
 
 alloc_status mem_free() {
-    // ensure that it's called only once for each mem_init
+    // ensure that it's called only once mem_new_ for each mem_init
     // make sure all pool managers have been deallocated
     // can free the pool store array
     // update static variables
 
-    return ALLOC_FAIL;
+    if (mem_free_called == 0) {
+        mem_free_called = 1;
+        mem_init_called = 0;
+        return ALLOC_OK;
+    }
+
+    if (mem_free_called == 1) {
+
+        return ALLOC_CALLED_AGAIN;
+    }
+
+    if (mem_free_called == 0 && mem_init_called == 0) {
+        return ALLOC_NOT_FREED;
+    }
 }
 
 pool_pt mem_pool_open(size_t size, alloc_policy policy) {
     // make sure there the pool store is allocated
+    my_pool.mem = (char *) &my_pool;
+    my_pool.policy = policy;
+    my_pool.total_size = size;
+    my_pool.alloc_size = 0;
+    my_pool.num_allocs = 0;
+    my_pool.num_gaps = 1;
     // expand the pool store, if necessary
     // allocate a new mem pool mgr
     // check success, on error return null
@@ -129,7 +165,7 @@ pool_pt mem_pool_open(size_t size, alloc_policy policy) {
     //   link pool mgr to pool store
     // return the address of the mgr, cast to (pool_pt)
 
-    return NULL;
+    return &my_pool;
 }
 
 alloc_status mem_pool_close(pool_pt pool) {
@@ -144,7 +180,9 @@ alloc_status mem_pool_close(pool_pt pool) {
     // note: don't decrement pool_store_size, because it only grows
     // free mgr
 
-    return ALLOC_FAIL;
+
+
+    return ALLOC_OK;
 }
 
 alloc_pt mem_new_alloc(pool_pt pool, size_t size) {
@@ -170,6 +208,10 @@ alloc_pt mem_new_alloc(pool_pt pool, size_t size) {
     //   add to gap index
     //   check if successful
     // return allocation record by casting the node to (alloc_pt)
+    alloc_pt my_alloc;
+    my_alloc->size;
+    my_alloc->mem;
+    my_pool.alloc_size += size;
 
     return NULL;
 }
