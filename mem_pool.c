@@ -93,8 +93,7 @@ static alloc_status _mem_sort_gap_ix(pool_mgr_pt pool_mgr);
  *
  ***************************************/
 
-int mem_init_called = 0;  /* booleans 0 = false */
-int mem_free_called = 0;
+
 pool_t my_pool;
 
 /****************************************/
@@ -107,15 +106,12 @@ alloc_status mem_init() {
     // allocate the pool store with initial capacity
     // note: holds pointers only, other functions to allocate/deallocate
 
-    /*printf("mem_init = %d\n", mem_init_called); ghetto debug print */
-    if (mem_init_called == 0 ) {
-        mem_init_called = 1;
-        mem_free_called = 0;
+    if (pool_store == NULL){
+        pool_store = calloc(MEM_POOL_STORE_INIT_CAPACITY, sizeof(pool_mgr_pt));
         return ALLOC_OK;
     } else {
         return ALLOC_CALLED_AGAIN;
     }
-
 
 }
 
@@ -125,20 +121,14 @@ alloc_status mem_free() {
     // can free the pool store array
     // update static variables
 
-    if (mem_free_called == 0) {
-        mem_free_called = 1;
-        mem_init_called = 0;
+    if (pool_store != NULL){
+        free(pool_store);
+        pool_store = NULL;
         return ALLOC_OK;
-    }
-
-    if (mem_free_called == 1) {
-
+    } else {
         return ALLOC_CALLED_AGAIN;
     }
 
-    if (mem_free_called == 0 && mem_init_called == 0) {
-        return ALLOC_NOT_FREED;
-    }
 }
 
 pool_pt mem_pool_open(size_t size, alloc_policy policy) {
@@ -165,7 +155,7 @@ pool_pt mem_pool_open(size_t size, alloc_policy policy) {
     //   link pool mgr to pool store
     // return the address of the mgr, cast to (pool_pt)
 
-    return &my_pool;
+    return (pool_pt)my_pool.mem;
 }
 
 alloc_status mem_pool_close(pool_pt pool) {
@@ -209,11 +199,11 @@ alloc_pt mem_new_alloc(pool_pt pool, size_t size) {
     //   check if successful
     // return allocation record by casting the node to (alloc_pt)
     alloc_pt my_alloc;
-    my_alloc->size;
+    my_alloc->size=size;
     my_alloc->mem;
     my_pool.alloc_size += size;
 
-    return NULL;
+    return (alloc_pt)my_alloc->mem;
 }
 
 alloc_status mem_del_alloc(pool_pt pool, alloc_pt alloc) {
