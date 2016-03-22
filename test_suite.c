@@ -216,6 +216,7 @@ static void test_pool_nonempty(void **state) {
     assert_non_null(alloc);
     assert_non_null(alloc->mem);
     assert_in_range(alloc->size, 100, 100);
+    assert_int_equal(pool->num_allocs, 1); //added
 
     INFO("Trying to close pool...");
     status = mem_pool_close(pool);
